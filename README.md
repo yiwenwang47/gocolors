@@ -1,5 +1,9 @@
-# A simple program to extract colors from a picture. 
+# A simple program to extract a palette from a picture. 
 
-Combination of http requests and image manipulation in Golang.
+Image manipulation in Golang.
 
-Ongoing. The image-to-json part is done.
+The task to extract a color palette from a picture is always arbitrary, and the current approach is to: blur -> resize -> cluster.
+
+Might use the Colormind API (http://colormind.io/) to refine the results.
+
+Ongoing.
