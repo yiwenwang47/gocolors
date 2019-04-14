@@ -8,7 +8,6 @@ import (
 	"math"
 	"os"
 
-	"image/jpeg"
 	_ "image/png" //For png files.
 
 	"github.com/esimov/stackblur-go"
@@ -18,7 +17,10 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
+//Color is a slice representing R, G, B, A.
 type Color [4]uint32
+
+//Newcolor is a slice representing R, G, B.
 type Newcolor [3]int
 
 func blurRadius(m image.Image) uint32 {
@@ -44,15 +46,6 @@ func blurAndResize(name string) image.Image {
 	mPreResize := stackblur.Process(mPreBlur, radius)
 	m := resize.Resize(100, 0, mPreResize, resize.Lanczos3)
 	return m
-}
-
-func saveImage(m image.Image, savename string) {
-	out, err := os.Create(savename + ".jpeg")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer out.Close()
-	jpeg.Encode(out, m, nil)
 }
 
 func rbgaToRgb(c Color) Newcolor {
