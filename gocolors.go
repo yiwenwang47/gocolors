@@ -27,8 +27,8 @@ func ExtractRGB(filename string, k int, alpha float64) []Newcolor {
 	return clustered
 }
 
-//ExtractPalette extracts a palette and saves it as a jpg file.
-func ExtractPalette(filename string, savename string, k int, alpha float64) {
+//ExtractAndSave extracts a palette and saves it as a jpg file.
+func ExtractAndSave(filename string, savename string, k int, alpha float64) {
 	clustered := ExtractRGB(filename, k, alpha)
 	img := image.NewRGBA(image.Rect(0, 0, k*200, 200))
 	for i, c := range clustered {
