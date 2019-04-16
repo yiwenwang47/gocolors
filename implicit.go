@@ -72,7 +72,7 @@ func imageToSlice(m image.Image) []Newcolor {
 	return colorSlice
 }
 
-func extractByKmeans(colorSlice []Newcolor, k int, alpha float64) []Newcolor {
+func extractByKmeans(colorSlice []Newcolor, k int, alpha float64) ([]Newcolor, error) {
 	var data clusters.Observations
 	var clustered []Newcolor
 	for _, pixel := range colorSlice {
@@ -81,16 +81,16 @@ func extractByKmeans(colorSlice []Newcolor, k int, alpha float64) []Newcolor {
 			float64(pixel[1]),
 			float64(pixel[2])})
 	}
-	km, err := kmeans.NewWithOptions(alpha, nil)
-	clusters, err := km.Partition(data, k)
-	if err != nil {
-		panic(err)
+	km, err0 := kmeans.NewWithOptions(alpha, nil)
+	clusters, err1 := km.Partition(data, k)
+	if err0 != nil || err1 != nil {
+		return nil, errors.New("failed to perform a clustering analysis")
 	}
 	for _, c := range clusters {
 		newPixel := [3]int{int(c.Center[0]), int(c.Center[1]), int(c.Center[2])}
 		clustered = append(clustered, newPixel)
 	}
-	return clustered
+	return clustered, nil
 }
 
 func colorsliceToJSON(colorSlice []Newcolor) string {
@@ -105,7 +105,7 @@ func colormind(jsonFromImage string) (map[string]*json.RawMessage, error) {
 	request := gorequest.New()
 	resp, body, errs := request.Get("http://colormind.io/api/").Send(jsonFromImage).End()
 	if errs != nil {
-		return nil, errors.New("failed to send to Colormind API")
+		return nil, errors.New("failed to connect to Colormind API")
 	}
 	if resp.StatusCode == 200 {
 		var objmap map[string]*json.RawMessage
@@ -115,6 +115,7 @@ func colormind(jsonFromImage string) (map[string]*json.RawMessage, error) {
 	return nil, errors.New("no response")
 }
 
+//Parser ... parses the json result from Colormind API
 func Parser(result string) []Newcolor {
 	var parsed []Newcolor
 	result = strings.ReplaceAll(result, "[", "")

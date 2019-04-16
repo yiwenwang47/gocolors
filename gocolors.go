@@ -20,16 +20,19 @@ func SaveImage(m image.Image, savename string) {
 
 //ExtractRGB ... returns a slice of colors in RGB.
 //The basic approach: blur, resize, kmeans cluster.
-func ExtractRGB(filename string, k int, alpha float64) []Newcolor {
+func ExtractRGB(filename string, k int, alpha float64) ([]Newcolor, error) {
 	img := blurAndResize(filename)
 	imgSlice := imageToSlice(img)
-	clustered := extractByKmeans(imgSlice, k, alpha)
-	return clustered
+	clustered, err := extractByKmeans(imgSlice, k, alpha)
+	return clustered, err
 }
 
 //ExtractAndSave ... extracts a palette and saves it as a jpg file.
 func ExtractAndSave(filename string, savename string, k int, alpha float64) {
-	clustered := ExtractRGB(filename, k, alpha)
+	clustered, err := ExtractRGB(filename, k, alpha)
+	if err != nil {
+		panic(err)
+	}
 	img := image.NewRGBA(image.Rect(0, 0, k*200, 200))
 	for i, c := range clustered {
 		for x := i * 200; x < (i+1)*200; x++ {
@@ -43,7 +46,10 @@ func ExtractAndSave(filename string, savename string, k int, alpha float64) {
 
 //ExtractAndSaveRefined ... extracts a palette, refines it and saves both.
 func ExtractAndSaveRefined(filename string, savenameOriginal string, savenameRefined string, k int, alpha float64) ([]Newcolor, error) {
-	clustered := ExtractRGB(filename, k, alpha)
+	clustered, err := ExtractRGB(filename, k, alpha)
+	if err != nil {
+		return nil, err
+	}
 	jsFromPic := colorsliceToJSON(clustered)
 	mapOfResults, err := colormind(jsFromPic)
 	if err != nil {
