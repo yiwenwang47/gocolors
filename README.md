@@ -5,10 +5,13 @@ Image manipulation in Golang.
 The task to extract a color palette from a picture is always arbitrary, and the approach of this program is to: blur -> resize -> kmeans cluster.
 
 ## Dependency
-github.com/esimov/stackblur-go
-github.com/nfnt/resize
-github.com/muesli/kmeans
-github.com/parnurzeal/gorequest
+https://github.com/esimov/stackblur-go
+
+https://github.com/nfnt/resize
+
+https://github.com/muesli/kmeans
+
+https://github.com/parnurzeal/gorequest
 
 ## Usage
 To install
