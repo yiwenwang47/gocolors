@@ -2,13 +2,13 @@ package gocolors
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"image"
 	"log"
 	"math"
 	"os"
-
-	_ "image/png" //For png files.
+	"strconv"
+	"strings"
 
 	"github.com/esimov/stackblur-go"
 	"github.com/muesli/clusters"
@@ -17,10 +17,10 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-//Color is a slice representing R, G, B, A.
+//Color ... a slice representing R, G, B, A.
 type Color [4]uint32
 
-//Newcolor is a slice representing R, G, B.
+//Newcolor ... a slice representing R, G, B.
 type Newcolor [3]int
 
 func blurRadius(m image.Image) uint32 {
@@ -101,13 +101,33 @@ func colorsliceToJSON(colorSlice []Newcolor) string {
 	return string(jsonFromImage)
 }
 
-func colormindTemp(jsonFromImage string) {
+func colormind(jsonFromImage string) (map[string]*json.RawMessage, error) {
 	request := gorequest.New()
 	resp, body, errs := request.Get("http://colormind.io/api/").Send(jsonFromImage).End()
 	if errs != nil {
-		panic(errs)
+		return nil, errors.New("failed to send to Colormind API")
 	}
 	if resp.StatusCode == 200 {
-		fmt.Println(body)
+		var objmap map[string]*json.RawMessage
+		err := json.Unmarshal([]byte(body), &objmap)
+		return objmap, err
 	}
+	return nil, errors.New("no response")
+}
+
+func Parser(result string) []Newcolor {
+	var parsed []Newcolor
+	result = strings.ReplaceAll(result, "[", "")
+	result = strings.ReplaceAll(result, "]", "")
+	resultSplit := strings.Split(result, ",")
+	for i := 0; i < 5; i++ {
+		r, errR := strconv.Atoi(resultSplit[i*3])
+		g, errG := strconv.Atoi(resultSplit[i*3+1])
+		b, errB := strconv.Atoi(resultSplit[i*3+2])
+		if errR != nil || errG != nil || errB != nil {
+			return nil
+		}
+		parsed = append(parsed, Newcolor{r, g, b})
+	}
+	return parsed
 }
