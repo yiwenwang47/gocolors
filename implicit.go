@@ -115,7 +115,7 @@ func colormind(jsonFromImage string) (map[string]*json.RawMessage, error) {
 	return nil, errors.New("no response")
 }
 
-//Parser ... parses the json result from Colormind API
+//Parser ... parses the json result from Colormind API.
 func Parser(result string) []Newcolor {
 	var parsed []Newcolor
 	result = strings.ReplaceAll(result, "[", "")

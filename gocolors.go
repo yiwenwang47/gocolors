@@ -27,11 +27,22 @@ func ExtractRGB(filename string, k int, alpha float64) ([]Newcolor, error) {
 	return clustered, err
 }
 
+//Refine ... takes advantage of the Colormind API.
+func Refine(clustered []Newcolor) ([]Newcolor, error) {
+	jsFromPic := colorsliceToJSON(clustered)
+	mapOfResults, err := colormind(jsFromPic)
+	if err != nil {
+		return nil, err
+	}
+	refined := Parser(string(*mapOfResults["result"]))
+	return refined, nil
+}
+
 //ExtractAndSave ... extracts a palette and saves it as a jpg file.
-func ExtractAndSave(filename string, savename string, k int, alpha float64) {
+func ExtractAndSave(filename string, savename string, k int, alpha float64) ([]Newcolor, error) {
 	clustered, err := ExtractRGB(filename, k, alpha)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	img := image.NewRGBA(image.Rect(0, 0, k*200, 200))
 	for i, c := range clustered {
@@ -42,6 +53,7 @@ func ExtractAndSave(filename string, savename string, k int, alpha float64) {
 		}
 	}
 	SaveImage(img, savename)
+	return clustered, err
 }
 
 //ExtractAndSaveRefined ... extracts a palette, refines it and saves both.
@@ -50,12 +62,10 @@ func ExtractAndSaveRefined(filename string, savenameOriginal string, savenameRef
 	if err != nil {
 		return nil, err
 	}
-	jsFromPic := colorsliceToJSON(clustered)
-	mapOfResults, err := colormind(jsFromPic)
+	refined, err := Refine(clustered)
 	if err != nil {
 		return nil, err
 	}
-	refined := Parser(string(*mapOfResults["result"]))
 
 	img := image.NewRGBA(image.Rect(0, 0, k*200, 200))
 	for i, c := range clustered {
@@ -66,6 +76,7 @@ func ExtractAndSaveRefined(filename string, savenameOriginal string, savenameRef
 		}
 	}
 	SaveImage(img, savenameOriginal)
+
 	imgRefined := image.NewRGBA(image.Rect(0, 0, 5*200, 200))
 	for i, c := range refined {
 		for x := i * 200; x < (i+1)*200; x++ {
