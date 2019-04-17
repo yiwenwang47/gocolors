@@ -7,8 +7,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/esimov/stackblur-go"
 	"github.com/muesli/clusters"
@@ -16,12 +14,6 @@ import (
 	"github.com/nfnt/resize"
 	"github.com/parnurzeal/gorequest"
 )
-
-//Color ... a slice representing R, G, B, A.
-type Color [4]uint32
-
-//Newcolor ... a slice representing R, G, B.
-type Newcolor [3]int
 
 func blurRadius(m image.Image) uint32 {
 	bounds := m.Bounds()
@@ -113,22 +105,4 @@ func colormind(jsonFromImage string) (map[string]*json.RawMessage, error) {
 		return objmap, err
 	}
 	return nil, errors.New("no response")
-}
-
-//Parser ... parses the json result from Colormind API.
-func Parser(result string) []Newcolor {
-	var parsed []Newcolor
-	result = strings.ReplaceAll(result, "[", "")
-	result = strings.ReplaceAll(result, "]", "")
-	resultSplit := strings.Split(result, ",")
-	for i := 0; i < 5; i++ {
-		r, errR := strconv.Atoi(resultSplit[i*3])
-		g, errG := strconv.Atoi(resultSplit[i*3+1])
-		b, errB := strconv.Atoi(resultSplit[i*3+2])
-		if errR != nil || errG != nil || errB != nil {
-			return nil
-		}
-		parsed = append(parsed, Newcolor{r, g, b})
-	}
-	return parsed
 }
