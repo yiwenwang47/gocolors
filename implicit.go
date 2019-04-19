@@ -20,7 +20,7 @@ func blurRadius(m image.Image) uint32 {
 	height := bounds.Max.Y - bounds.Min.Y
 	width := bounds.Max.X - bounds.Min.X
 	x := math.Sqrt(float64(width * height))
-	x = x / 10
+	x = x / 20
 	return uint32(x)
 }
 
@@ -36,7 +36,7 @@ func blurAndResize(name string) image.Image {
 	}
 	radius := blurRadius(mPreBlur)
 	mPreResize := stackblur.Process(mPreBlur, radius)
-	m := resize.Resize(100, 0, mPreResize, resize.Lanczos3)
+	m := resize.Resize(500, 0, mPreResize, resize.Lanczos3)
 	return m
 }
 
@@ -49,24 +49,22 @@ func rbgaToRgb(c Color) Newcolor {
 	return converted
 }
 
-func imageToSlice(m image.Image) []Newcolor {
-	var pixel Color
-	colorSlice := make([]Newcolor, 0, 3)
+func imageToSlice(m image.Image) ColorSlice {
+	colorSlice := make(ColorSlice, 0, 3)
 	bounds := m.Bounds()
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r, g, b, a := m.At(x, y).RGBA()
-			pixel = Color{r, g, b, a}
-			convertedpixel := rbgaToRgb(pixel)
+			convertedpixel := rbgaToRgb(Color{r, g, b, a})
 			colorSlice = append(colorSlice, convertedpixel)
 		}
 	}
 	return colorSlice
 }
 
-func extractByKmeans(colorSlice []Newcolor, k int, alpha float64) ([]Newcolor, error) {
+func extractByKmeans(colorSlice ColorSlice, k int, alpha float64) (ColorSlice, error) {
 	var data clusters.Observations
-	var clustered []Newcolor
+	var clustered ColorSlice
 	for _, pixel := range colorSlice {
 		data = append(data, clusters.Coordinates{
 			float64(pixel[0]),
@@ -85,7 +83,7 @@ func extractByKmeans(colorSlice []Newcolor, k int, alpha float64) ([]Newcolor, e
 	return clustered, nil
 }
 
-func colorsliceToJSON(colorSlice []Newcolor) string {
+func colorsliceToJSON(colorSlice ColorSlice) string {
 	data := make(map[string]interface{})
 	data["model"] = "default"
 	data["input"] = colorSlice

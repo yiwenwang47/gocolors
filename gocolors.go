@@ -19,6 +19,9 @@ type Newcolor [3]int
 //ColorHSL ... a slice representing H, S, L.
 type ColorHSL [3]int
 
+//ColorSlice ... a slice or RGB colors.
+type ColorSlice []Newcolor
+
 //SaveImage ... a simple writer function.
 func SaveImage(m image.Image, savename string) {
 	out, err := os.Create(savename + ".jpeg")
@@ -30,7 +33,8 @@ func SaveImage(m image.Image, savename string) {
 }
 
 //CreatePalette ... creates a palette image.
-func CreatePalette(colorslice []Newcolor, k int) image.Image {
+func CreatePalette(colorslice ColorSlice) image.Image {
+	k := len(colorslice)
 	img := image.NewRGBA(image.Rect(0, 0, k*200, 200))
 	for i, c := range colorslice {
 		for x := i * 200; x < (i+1)*200; x++ {
@@ -43,8 +47,8 @@ func CreatePalette(colorslice []Newcolor, k int) image.Image {
 }
 
 //Parser ... parses the json result from Colormind API.
-func Parser(result string) []Newcolor {
-	var parsed []Newcolor
+func Parser(result string) ColorSlice {
+	var parsed ColorSlice
 	result = strings.ReplaceAll(result, "[", "")
 	result = strings.ReplaceAll(result, "]", "")
 	resultSplit := strings.Split(result, ",")
@@ -60,9 +64,9 @@ func Parser(result string) []Newcolor {
 	return parsed
 }
 
-//ExtractRGB ... returns a slice of colors in RGB.
+//ExtractByKmeans ... returns a slice of colors in RGB.
 //The basic approach: blur, resize, kmeans cluster.
-func ExtractRGB(filename string, k int, alpha float64) ([]Newcolor, error) {
+func ExtractByKmeans(filename string, k int, alpha float64) (ColorSlice, error) {
 	img := blurAndResize(filename)
 	imgSlice := imageToSlice(img)
 	clustered, err := extractByKmeans(imgSlice, k, alpha)
@@ -70,43 +74,13 @@ func ExtractRGB(filename string, k int, alpha float64) ([]Newcolor, error) {
 }
 
 //Refine ... takes advantage of the Colormind API.
-func Refine(clustered []Newcolor) ([]Newcolor, error) {
+func Refine(clustered ColorSlice) (ColorSlice, error) {
 	jsFromPic := colorsliceToJSON(clustered)
 	mapOfResults, err := colormind(jsFromPic)
 	if err != nil {
 		return nil, err
 	}
 	refined := Parser(string(*mapOfResults["result"]))
-	return refined, nil
-}
-
-//ExtractAndSave ... extracts a palette and saves it as a jpg file.
-func ExtractAndSave(filename string, savename string, k int, alpha float64) ([]Newcolor, error) {
-	clustered, err := ExtractRGB(filename, k, alpha)
-	if err != nil {
-		return nil, err
-	}
-	img := CreatePalette(clustered, k)
-	SaveImage(img, savename)
-	return clustered, err
-}
-
-//ExtractAndSaveRefined ... extracts a palette, refines it and saves both.
-func ExtractAndSaveRefined(filename string, savenameOriginal string, savenameRefined string, k int, alpha float64) ([]Newcolor, error) {
-	clustered, err := ExtractRGB(filename, k, alpha)
-	if err != nil {
-		return nil, err
-	}
-	refined, err := Refine(clustered)
-	if err != nil {
-		return nil, err
-	}
-
-	img := CreatePalette(clustered, k)
-	SaveImage(img, savenameOriginal)
-
-	imgRefined := CreatePalette(refined, 5)
-	SaveImage(imgRefined, savenameRefined)
 	return refined, nil
 }
 
